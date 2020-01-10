@@ -1,0 +1,88 @@
+<script type="text/html" id="box-template">
+<div class="box" data-bind="event:{'mouseover': Hover, 'mousemove': Hover, 'touchstart': Hover, 'MSPointerDown': Hover }, style:{ width: Size()+'px', height: Size()+'px', backgroundColor: Color() }, attr:{'class':BoxClass}, foreach: { data: Children, afterAdd: onAdd }">
+    <!-- ko template: { name: 'box-template', data: $data } -->
+    <!-- /ko -->
+</div>
+</script>
+
+<div data-bind="template: { name: 'box-template' }" class="wrap"></div>
+<div>Hello, welcome to Recursive Metro.  Hover over a colour to start.</div>
+
+<script language="javascript" type="text/javascript" src="/SiteAssets/boards/knockout-2.0.0.js"></script>
+<script>
+
+function randomColor(c) {
+    var variance = (50 * Math.random())<<0;
+    c = (Math.random() > 0.5) ? c + variance : c - variance;
+    c = c % 360;
+    return c;
+};
+
+var vm = function(size, boxclass, boxcolor) {
+    var self = this;
+
+    self.Size = ko.observable(size);
+    self.BoxClass = ko.observable(boxclass);
+    self.Children = ko.observableArray();
+    self.BoxColor = ko.observable(randomColor(boxcolor));
+    self.Color = ko.computed(function() {
+        if (self.Children().length > 0) return '#FFFFFF';
+        
+        // on browsers that don't do hsl colors - just random it
+        if (document.nohsl) return '#'+((Math.random()*0xEEE + 0x111)<<0).toString(16);
+        return 'hsl(' + boxcolor + ', 85%, 45%)';
+    });
+    self.Hover = function() {
+        if (self.Children().length > 0) return;
+
+        var s = ko.utils.unwrapObservable(self.Size) / 2 - 1;
+        var c = ko.utils.unwrapObservable(self.BoxColor);
+        self.Children.push(new vm(s, 'box1', c));
+        self.Children.push(new vm(s, 'box2', c));
+        self.Children.push(new vm(s, 'box3', c));
+        self.Children.push(new vm(s, 'box4', c));
+    };
+
+    self.onAdd = function(elements) {
+        // tried to do jQuery fadeIn but can't get it to work, gave up for now.
+        //$(elements).fadeIn();
+    };
+
+};
+
+try {
+    // a dummy way to test if the browser supports hsl colors (ie8 doesn't).
+    // hsl colors are a lot* easier to calculate "near" colors by locking 's' and 'l' and varying the 'h'ue
+    document.documentElement.style.backgroundColor = "hsl(0,100%,100%)";
+    document.nohsl = false;
+    document.documentElement.style.backgroundColor = "";
+}
+catch(ex) {
+    document.nohsl = true;
+}
+
+var root = new vm(800, '', Math.floor(360 * Math.random()));
+ko.applyBindings(root);
+
+</script>
+<style>
+div.box1 {
+    float: left;
+    margin: 0px 1px 1px 0px;            
+}
+div.box2 {
+    float: left;
+    margin: 0px 0px 1px 1px;
+}
+div.box3 {
+    float: left;
+    margin: 1px 1px 0px 0px;
+}
+div.box4 {
+    float: left;
+    margin: 1px 0px 0px 1px;
+}
+div.wrap {
+    height: 600px;   
+}
+</style>
